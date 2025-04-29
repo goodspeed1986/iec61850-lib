@@ -1,0 +1,113 @@
+name: Build libiec61850 Static Library
+
+on:
+  push:
+    branches: [ v1.6 ]
+  pull_request:
+    branches: [ v1.6 ]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-14]
+        arch: [x64, arm64]
+        exclude:
+          - os: ubuntu-latest
+            arch: x64
+          - os: windows-latest
+            arch: x64
+        include:
+          - os: ubuntu-latest
+            arch: arm
+      fail-fast: false
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        ref: v1.6
+
+    - name: Set up build environment (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential
+        if [ "${{ matrix.arch }}" = "arm" ]; then
+          sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf libc6-dev-armel-cross libc6-dev-armhf-cross
+        fi
+        if [ "${{ matrix.arch }}" = "arm64" ]; then
+          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+        fi
+
+    - name: Set up build environment (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        choco install cmake
+        curl -L -o wpcap.zip https://www.winpcap.org/install/bin/WpdPack_4_1_2.zip
+        unzip wpcap.zip -d third_party/winpcap
+      shell: bash
+
+    - name: Set up build environment (macOS)
+      if: matrix.os == 'macos-14'
+      run: |
+        brew install cmake
+
+    - name: Configure CMake (Ubuntu x64)
+      if: matrix.os == 'ubuntu-latest' && matrix.arch == 'x64'
+      run: |
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release
+
+    - name: Configure CMake (Ubuntu arm)
+      if: matrix.os == 'ubuntu-latest' && matrix.arch == 'arm'
+      run: |
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../cmake/arm-linux-gnueabihf.cmake
+
+    - name: Configure CMake (Ubuntu arm64)
+      if: matrix.os == 'ubuntu-latest' && matrix.arch == 'arm64'
+      run: |
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../cmake/aarch64-linux-gnu.cmake
+
+    - name: Configure CMake (Windows x64)
+      if: matrix.os == 'windows-latest' && matrix.arch == 'x64'
+      run: |
+        mkdir build
+        cd build
+        cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release
+
+    - name: Configure CMake (Windows arm64)
+      if: matrix.os == 'windows-latest' && matrix.arch == 'arm64'
+      run: |
+        mkdir build
+        cd build
+        cmake .. -G "Visual Studio 17 2022" -A ARM64 -DCMAKE_BUILD_TYPE=Release
+
+    - name: Configure CMake (macOS universal)
+      if: matrix.os == 'macos-14'
+      run: |
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" -DCMAKE_BUILD_TYPE=Release
+
+    - name: Build
+      run: |
+        cd build
+        cmake --build . --config Release
+
+    - name: Archive artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: libiec61850-${{ matrix.os }}-${{ matrix.arch }}
+        path: |
+          build/libiec61850.a
+          build/libiec61850.lib
+          build/src/**/*.h
+        retention-days: 7
