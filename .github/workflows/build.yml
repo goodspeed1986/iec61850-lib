@@ -2,9 +2,9 @@ name: Build libiec61850 Static Library
 
 on:
   push:
-    branches: [ v1.6 ]
+    branches: [ main ]
   pull_request:
-    branches: [ v1.6 ]
+    branches: [ main ]
 
 jobs:
   build:
