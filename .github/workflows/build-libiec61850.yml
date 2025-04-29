@@ -45,13 +45,25 @@ jobs:
         mkdir -p libiec61850-source/third_party/mbedtls
         curl -L -o mbedtls.tar.gz https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/v3.6.0.tar.gz
         tar -xzf mbedtls.tar.gz -C libiec61850-source/third_party/mbedtls --strip-components=1
+        ls -la libiec61850-source/third_party/mbedtls
+        ls -la libiec61850-source/third_party/mbedtls/include
+      shell: bash
+
+    - name: Build mbedtls (Ubuntu and macOS)
+      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
+      run: |
+        mkdir -p libiec61850-source/third_party/mbedtls/build
+        cd libiec61850-source/third_party/mbedtls/build
+        cmake .. -DCMAKE_BUILD_TYPE=Release
+        cmake --build . --config Release
+      shell: bash
 
     - name: Build mbedtls (Windows)
       if: matrix.os == 'windows-latest'
       run: |
         mkdir -p libiec61850-source/third_party/mbedtls/build
         cd libiec61850-source/third_party/mbedtls/build
-        cmake .. -G "Visual Studio 17 2022" -A x64
+        cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release
         cmake --build . --config Release
       shell: bash
 
@@ -101,7 +113,7 @@ jobs:
       run: |
         mkdir -p libiec61850-source/build
         cd libiec61850-source/build
-        cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DWITH_MBEDTLS=ON > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DWITH_MBEDTLS=ON -DMBEDTLS_INCLUDE_DIR=../third_party/mbedtls/include -DMBEDTLS_LIBRARY=../third_party/mbedtls/build/library/libmbedtls.a > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
       shell: bash
 
     - name: Configure CMake (Ubuntu arm)
@@ -109,7 +121,7 @@ jobs:
       run: |
         mkdir -p libiec61850-source/build
         cd libiec61850-source/build
-        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../cmake/arm-linux-gnueabihf.cmake -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DWITH_MBEDTLS=ON > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../cmake/arm-linux-gnueabihf.cmake -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DWITH_MBEDTLS=ON -DMBEDTLS_INCLUDE_DIR=../third_party/mbedtls/include -DMBEDTLS_LIBRARY=../third_party/mbedtls/build/library/libmbedtls.a > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
       shell: bash
 
     - name: Configure CMake (Ubuntu arm64)
@@ -117,7 +129,7 @@ jobs:
       run: |
         mkdir -p libiec61850-source/build
         cd libiec61850-source/build
-        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../cmake/aarch64-linux-gnu.cmake -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DWITH_MBEDTLS=ON > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../cmake/aarch64-linux-gnu.cmake -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DWITH_MBEDTLS=ON -DMBEDTLS_INCLUDE_DIR=../third_party/mbedtls/include -DMBEDTLS_LIBRARY=../third_party/mbedtls/build/library/libmbedtls.a > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
       shell: bash
 
     - name: Configure CMake (Windows x64)
@@ -125,7 +137,7 @@ jobs:
       run: |
         mkdir -p libiec61850-source/build
         cd libiec61850-source/build
-        cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DWITH_MBEDTLS=ON > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
+        cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DWITH_MBEDTLS=ON -DMBEDTLS_INCLUDE_DIR=../third_party/mbedtls/include -DMBEDTLS_LIBRARY=../third_party/mbedtls/build/library/mbedtls.lib > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
       shell: bash
 
     - name: Configure CMake (macOS x64)
@@ -133,7 +145,7 @@ jobs:
       run: |
         mkdir -p libiec61850-source/build
         cd libiec61850-source/build
-        cmake .. -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DWITH_MBEDTLS=ON > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
+        cmake .. -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DWITH_MBEDTLS=ON -DMBEDTLS_INCLUDE_DIR=../third_party/mbedtls/include -DMBEDTLS_LIBRARY=../third_party/mbedtls/build/library/libmbedtls.a > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
       shell: bash
 
     - name: Configure CMake (macOS arm64)
@@ -141,7 +153,7 @@ jobs:
       run: |
         mkdir -p libiec61850-source/build
         cd libiec61850-source/build
-        cmake .. -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DWITH_MBEDTLS=ON > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
+        cmake .. -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DWITH_MBEDTLS=ON -DMBEDTLS_INCLUDE_DIR=../third_party/mbedtls/include -DMBEDTLS_LIBRARY=../third_party/mbedtls/build/library/libmbedtls.a > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
       shell: bash
 
     - name: Debug CMake output
