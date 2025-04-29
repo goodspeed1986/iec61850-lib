@@ -10,12 +10,14 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-14]
+        os: [ubuntu-latest, windows-latest, macos-latest]
         arch: [x64]
         include:
           - os: ubuntu-latest
             arch: arm
           - os: ubuntu-latest
+            arch: arm64
+          - os: macos-latest
             arch: arm64
       fail-fast: false
 
@@ -66,7 +68,7 @@ jobs:
       shell: bash
 
     - name: Set up build environment (macOS)
-      if: matrix.os == 'macos-14'
+      if: matrix.os == 'macos-latest'
       run: |
         brew install cmake
 
@@ -98,12 +100,12 @@ jobs:
         cd libiec61850-source/build
         cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release
 
-    - name: Configure CMake (macOS universal)
-      if: matrix.os == 'macos-14'
+    - name: Configure CMake (macOS arm64)
+      if: matrix.os == 'macos-latest' && matrix.arch == 'arm64'
       run: |
         mkdir libiec61850-source/build
         cd libiec61850-source/build
-        cmake .. -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" -CMAKE_BUILD_TYPE=Release
+        cmake .. -DCMAKE_OSX_ARCHITECTURES=arm64 -CMAKE_BUILD_TYPE=Release
 
     - name: Build
       run: |
