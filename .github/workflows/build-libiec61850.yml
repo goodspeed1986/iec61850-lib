@@ -71,41 +71,42 @@ jobs:
       if: matrix.os == 'macos-latest'
       run: |
         brew install cmake
+        brew upgrade cmake # Убедимся, что используется последняя версия CMake
 
     - name: Configure CMake (Ubuntu x64)
       if: matrix.os == 'ubuntu-latest' && matrix.arch == 'x64'
       run: |
         mkdir libiec61850-source/build
         cd libiec61850-source/build
-        cmake .. -DCMAKE_BUILD_TYPE=Release
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF
 
     - name: Configure CMake (Ubuntu arm)
       if: matrix.os == 'ubuntu-latest' && matrix.arch == 'arm'
       run: |
         mkdir libiec61850-source/build
         cd libiec61850-source/build
-        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../cmake/arm-linux-gnueabihf.cmake
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../cmake/arm-linux-gnueabihf.cmake -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF
 
     - name: Configure CMake (Ubuntu arm64)
       if: matrix.os == 'ubuntu-latest' && matrix.arch == 'arm64'
       run: |
         mkdir libiec61850-source/build
         cd libiec61850-source/build
-        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../cmake/aarch64-linux-gnu.cmake
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../cmake/aarch64-linux-gnu.cmake -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF
 
     - name: Configure CMake (Windows x64)
       if: matrix.os == 'windows-latest' && matrix.arch == 'x64'
       run: |
         mkdir libiec61850-source/build
         cd libiec61850-source/build
-        cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release
+        cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF
 
     - name: Configure CMake (macOS arm64)
       if: matrix.os == 'macos-latest' && matrix.arch == 'arm64'
       run: |
         mkdir libiec61850-source/build
         cd libiec61850-source/build
-        cmake .. -DCMAKE_OSX_ARCHITECTURES=arm64 -CMAKE_BUILD_TYPE=Release
+        cmake .. -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF
 
     - name: Build
       run: |
