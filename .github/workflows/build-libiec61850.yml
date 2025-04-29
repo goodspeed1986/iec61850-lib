@@ -46,6 +46,7 @@ jobs:
         mkdir -p libiec61850-source/cmake
         cp cmake/arm-linux-gnueabihf.cmake libiec61850-source/cmake/
         cp cmake/aarch64-linux-gnu.cmake libiec61850-source/cmake/
+      shell: bash
 
     - name: Set up build environment (Ubuntu)
       if: matrix.os == 'ubuntu-latest'
@@ -58,6 +59,7 @@ jobs:
         if [ "${{ matrix.arch }}" = "arm64" ]; then
           sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
         fi
+      shell: bash
 
     - name: Set up build environment (Windows)
       if: matrix.os == 'windows-latest'
@@ -72,6 +74,7 @@ jobs:
       run: |
         brew install cmake
         brew upgrade cmake # Используем последнюю версию CMake
+      shell: bash
 
     - name: Check source directory
       run: |
@@ -139,7 +142,8 @@ jobs:
         fi
       shell: bash
 
-    - name: Build
+    - name: Build (Unix)
+      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
       run: |
         if [ ! -d "libiec61850-source/build" ]; then
           echo "Error: Build directory not found"
@@ -147,6 +151,18 @@ jobs:
         fi
         cd libiec61850-source/build
         cmake --build . --config Release
+      shell: bash
+
+    - name: Build (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        if (!(Test-Path "libiec61850-source/build")) {
+          Write-Error "Build directory not found"
+          exit 1
+        }
+        cd libiec61850-source/build
+        cmake --build . --config Release
+      shell: powershell
 
     - name: Archive artifacts
       uses: actions/upload-artifact@v4
