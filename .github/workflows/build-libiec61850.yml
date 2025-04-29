@@ -41,7 +41,7 @@ jobs:
       shell: bash
 
     - name: Copy toolchain files
-      if: matrix.os == 'ubuntu-latest' && (matrix.arch == 'arm' || matrix.arch == 'arm64')
+      if: matrix.os == 'Ubuntu-latest' && (matrix.arch == 'arm' || matrix.arch == 'arm64')
       run: |
         mkdir -p libiec61850-source/cmake
         cp cmake/arm-linux-gnueabihf.cmake libiec61850-source/cmake/
@@ -49,7 +49,7 @@ jobs:
       shell: bash
 
     - name: Set up build environment (Ubuntu)
-      if: matrix.os == 'ubuntu-latest'
+      if: matrix.os == 'Ubuntu-latest'
       run: |
         sudo apt-get update
         sudo apt-get install -y cmake build-essential
@@ -85,7 +85,7 @@ jobs:
       shell: bash
 
     - name: Configure CMake (Ubuntu x64)
-      if: matrix.os == 'ubuntu-latest' && matrix.arch == 'x64'
+      if: matrix.os == 'Ubuntu-latest' && matrix.arch == 'x64'
       run: |
         mkdir -p libiec61850-source/build
         cd libiec61850-source/build
@@ -93,7 +93,7 @@ jobs:
       shell: bash
 
     - name: Configure CMake (Ubuntu arm)
-      if: matrix.os == 'ubuntu-latest' && matrix.arch == 'arm'
+      if: matrix.os == 'Ubuntu-latest' && matrix.arch == 'arm'
       run: |
         mkdir -p libiec61850-source/build
         cd libiec61850-source/build
@@ -101,7 +101,7 @@ jobs:
       shell: bash
 
     - name: Configure CMake (Ubuntu arm64)
-      if: matrix.os == 'ubuntu-latest' && matrix.arch == 'arm64'
+      if: matrix.os == 'Ubuntu-latest' && matrix.arch == 'arm64'
       run: |
         mkdir -p libiec61850-source/build
         cd libiec61850-source/build
@@ -164,12 +164,18 @@ jobs:
         cmake --build . --config Release
       shell: powershell
 
+    - name: Debug build output
+      run: |
+        echo "Listing contents of build directory:"
+        find libiec61850-source/build -type f || dir libiec61850-source/build /s
+      shell: bash
+
     - name: Archive artifacts
       uses: actions/upload-artifact@v4
       with:
         name: libiec61850-${{ matrix.os }}-${{ matrix.arch }}
         path: |
-          libiec61850-source/build/libiec61850.a
-          libiec61850-source/build/libiec61850.lib
+          libiec61850-source/build/**/libiec61850.a
+          libiec61850-source/build/**/libiec61850.lib
           libiec61850-source/src/**/*.h
         retention-days: 7
