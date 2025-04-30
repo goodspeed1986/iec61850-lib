@@ -129,7 +129,7 @@ jobs:
       run: |
         mkdir -p libiec61850-source/build
         cd libiec61850-source/build
-        cmake .. -DCMAKE_OSX_ARCHTECTURES=arm64 -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=../install > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
+        cmake .. -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=../install > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
       shell: bash
 
     - name: Debug CMake output
@@ -192,3 +192,72 @@ jobs:
           libiec61850-source/install/lib/*
           libiec61850-source/install/include/*
         retention-days: 7
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v1.6-${{ github.sha }}
+        release_name: libiec61850 Release v1.6-${{ github.sha }}
+        body: |
+          Automated release of libiec61850 v1.6 for multiple platforms.
+          Includes static libraries for all platforms and a single set of header files:
+          - Ubuntu (x64, arm, arm64)
+          - Windows (x64)
+          - macOS (x64, arm64)
+        draft: false
+        prerelease: false
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+
+    - name: Prepare single archive for release
+      run: |
+        # Создаём структуру директорий для архива
+        mkdir -p libiec61850-release/lib
+        mkdir -p libiec61850-release/include
+
+        # Копируем библиотеки из всех артефактов в lib/
+        for artifact in artifacts/libiec61850-*; do
+          platform_arch=$(basename "$artifact" | sed 's/libiec61850-//')
+          # Находим библиотеку в папке lib/
+          lib_file=$(find "$artifact/lib" -type f -name "*.a" -o -name "*.lib" | head -n 1)
+          if [ -n "$lib_file" ]; then
+            # Переименовываем библиотеку, добавляя платформу и архитектуру в имя
+            lib_ext="${lib_file##*.}"
+            cp "$lib_file" "libiec61850-release/lib/libiec61850-${platform_arch}.${lib_ext}"
+          fi
+        done
+
+        # Копируем заголовочные файлы из одного артефакта (Ubuntu x64)
+        cp -r artifacts/libiec61850-Ubuntu-latest-x64/include/* libiec61850-release/include/
+
+        # Создаём zip-архив
+        zip -r libiec61850-v1.6.zip libiec61850-release
+
+        # Проверяем содержимое архива
+        unzip -l libiec61850-v1.6.zip
+      shell: bash
+
+    - name: Upload Release Asset
+      run: |
+        echo "Uploading libiec61850-v1.6.zip to release..."
+        curl \
+          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          -H "Content-Type: application/zip" \
+          --data-binary "@libiec61850-v1.6.zip" \
+          "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.create_release.outputs.id }}/assets?name=libiec61850-v1.6.zip"
+      shell: bash
