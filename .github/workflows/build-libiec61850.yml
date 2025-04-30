@@ -113,7 +113,7 @@ jobs:
       run: |
         mkdir -p libiec61850-source/build
         cd libiec61850-source/build
-        cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SHARED_LIBS=OFF -D_CRT_SECURE_NO_WARNINGS=ON -DCMAKE_C_FLAGS="/wd4267;/wd4244" -DCMAKE_INSTALL_PREFIX=../install > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
+        cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SHARED_LIBS=OFF -D_CRT_SECURE_NO_WARNINGS=ON -DCMAKE_INSTALL_PREFIX=../install > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
       shell: bash
 
     - name: Configure CMake (macOS x64)
@@ -129,7 +129,7 @@ jobs:
       run: |
         mkdir -p libiec61850-source/build
         cd libiec61850-source/build
-        cmake .. -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=../install > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
+        cmake .. -DCMAKE_OSX_ARCHTECTURES=arm64 -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=../install > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
       shell: bash
 
     - name: Debug CMake output
