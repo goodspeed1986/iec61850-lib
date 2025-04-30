@@ -41,11 +41,26 @@ jobs:
       shell: bash
 
     - name: Copy toolchain files
-      if: matrix.os == 'ubuntu-latest' && (matrix.arch == 'arm' || matrix.arch == 'arm64')
+      if: matrix.os == 'Ubuntu-latest' && (matrix.arch == 'arm' || matrix.arch == 'arm64')
       run: |
         mkdir -p libiec61850-source/cmake
         cp cmake/arm-linux-gnueabihf.cmake libiec61850-source/cmake/
         cp cmake/aarch64-linux-gnu.cmake libiec61850-source/cmake/
+      shell: bash
+
+    - name: Patch CMakeLists.txt for static library (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        sed -i 's/add_library(iec61850 SHARED/add_library(iec61850 STATIC/' libiec61850-source/src/CMakeLists.txt
+        sed -i '/add_library(iec61850 STATIC/a set_target_properties(iec61850 PROPERTIES OUTPUT_NAME libiec61850)' libiec61850-source/src/CMakeLists.txt
+        cat libiec61850-source/src/CMakeLists.txt
+      shell: bash
+
+    - name: Patch CMakeLists.txt for static library (Unix)
+      if: matrix.os == 'Ubuntu-latest' || matrix.os == 'macos-latest'
+      run: |
+        sed -i 's/add_library(iec61850 SHARED/add_library(iec61850 STATIC/' libiec61850-source/src/CMakeLists.txt
+        cat libiec61850-source/src/CMakeLists.txt
       shell: bash
 
     - name: Set up build environment (Ubuntu)
@@ -113,7 +128,7 @@ jobs:
       run: |
         mkdir -p libiec61850-source/build
         cd libiec61850-source/build
-        cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SHARED_LIBS=OFF > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
+        cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SHARED_LIBS=OFF -D_CRT_SECURE_NO_WARNINGS=ON > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
       shell: bash
 
     - name: Configure CMake (macOS x64)
@@ -143,7 +158,7 @@ jobs:
       shell: bash
 
     - name: Build (Unix)
-      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
+      if: matrix.os == 'Ubuntu-latest' || matrix.os == 'macos-latest'
       run: |
         if [ ! -d "libiec61850-source/build" ]; then
           echo "Error: Build directory not found"
