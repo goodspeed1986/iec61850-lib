@@ -10,7 +10,7 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [Ubuntu-latest, windows-latest, macos-latest]
         arch: [x64]
         include:
           - os: ubuntu-latest
@@ -53,13 +53,6 @@ jobs:
       run: |
         sed -i 's/add_library(iec61850 SHARED/add_library(iec61850 STATIC/' libiec61850-source/src/CMakeLists.txt
         sed -i '/add_library(iec61850 STATIC/a set_target_properties(iec61850 PROPERTIES OUTPUT_NAME libiec61850)' libiec61850-source/src/CMakeLists.txt
-        cat libiec61850-source/src/CMakeLists.txt
-      shell: bash
-
-    - name: Patch CMakeLists.txt for static library (Unix)
-      if: matrix.os == 'Ubuntu-latest' || matrix.os == 'macos-latest'
-      run: |
-        sed -i 's/add_library(iec61850 SHARED/add_library(iec61850 STATIC/' libiec61850-source/src/CMakeLists.txt
         cat libiec61850-source/src/CMakeLists.txt
       shell: bash
 
