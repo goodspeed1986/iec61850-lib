@@ -53,7 +53,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
-        sudo apt-get install -y cmake build-essential
+        sudo apt-get install -y cmake build-essential doxygen
         if [ "${{ matrix.arch }}" = "arm" ]; then
           sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf libc6-dev-armel-cross libc6-dev-armhf-cross
         fi
@@ -73,7 +73,7 @@ jobs:
     - name: Set up build environment (macOS)
       if: matrix.os == 'macos-latest'
       run: |
-        brew install cmake make
+        brew install cmake make doxygen
         brew upgrade cmake
       shell: bash
 
@@ -96,14 +96,14 @@ jobs:
       if: matrix.os == 'ubuntu-latest' && matrix.arch == 'arm'
       run: |
         cd libiec61850-source
-        cmake . -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=./cmake/arm-linux-gnueabihf.cmake -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_C_FLAGS="-fvisibility=default -fPIC" -DCMAKE_CXX_FLAGS="-fvisibility=default -fPIC" -CMAKE_INSTALL_PREFIX=./install > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
+        cmake . -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=./cmake/arm-linux-gnueabihf.cmake -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_C_FLAGS="-fvisibility=default -fPIC" -DCMAKE_CXX_FLAGS="-fvisibility=default -fPIC" -DCMAKE_INSTALL_PREFIX=./install > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
       shell: bash
 
     - name: Configure CMake (Ubuntu arm64)
       if: matrix.os == 'ubuntu-latest' && matrix.arch == 'arm64'
       run: |
         cd libiec61850-source
-        cmake . -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=./cmake/aarch64-linux-gnu.cmake -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_C_FLAGS="-fvisibility=default -fPIC" -DCMAKE_CXX_FLAGS="-fvisibility=default -fPIC" -CMAKE_INSTALL_PREFIX=./install > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
+        cmake . -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=./cmake/aarch64-linux-gnu.cmake -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_C_FLAGS="-fvisibility=default -fPIC" -DCMAKE_CXX_FLAGS="-fvisibility=default -fPIC" -DCMAKE_INSTALL_PREFIX=./install > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
       shell: bash
 
     - name: Configure CMake (Windows x64)
@@ -111,21 +111,21 @@ jobs:
       run: |
         mkdir -p libiec61850-source/build
         cd libiec61850-source/build
-        cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SHARED_LIBS=OFF -D_CRT_SECURE_NO_WARNINGS=ON -CMAKE_INSTALL_PREFIX=../install > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
+        cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SHARED_LIBS=OFF -D_CRT_SECURE_NO_WARNINGS=ON -DCMAKE_INSTALL_PREFIX=../install > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
       shell: bash
 
     - name: Configure CMake (macOS x64)
       if: matrix.os == 'macos-latest' && matrix.arch == 'x64'
       run: |
         cd libiec61850-source
-        cmake . -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SHARED_LIBS=OFF -CMAKE_INSTALL_PREFIX=./install > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
+        cmake . -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=./install > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
       shell: bash
 
     - name: Configure CMake (macOS arm64)
       if: matrix.os == 'macos-latest' && matrix.arch == 'arm64'
       run: |
         cd libiec61850-source
-        cmake . -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SHARED_LIBS=OFF -CMAKE_INSTALL_PREFIX=./install > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
+        cmake . -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=./install > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
       shell: bash
 
     - name: Debug CMake output
