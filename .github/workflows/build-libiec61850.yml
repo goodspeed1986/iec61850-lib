@@ -1,3 +1,4 @@
+
 name: Build libiec61850 Static Library
 
 on:
@@ -72,7 +73,7 @@ jobs:
     - name: Set up build environment (macOS)
       if: matrix.os == 'macos-latest'
       run: |
-        brew install cmake
+        brew install cmake make
         brew upgrade cmake
       shell: bash
 
@@ -87,25 +88,22 @@ jobs:
     - name: Configure CMake (Ubuntu x64)
       if: matrix.os == 'ubuntu-latest' && matrix.arch == 'x64'
       run: |
-        mkdir -p libiec61850-source/build
-        cd libiec61850-source/build
-        cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_C_FLAGS="-fvisibility=default -fPIC" -DCMAKE_CXX_FLAGS="-fvisibility=default -fPIC" -DCMAKE_INSTALL_PREFIX=../install > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
+        cd libiec61850-source
+        cmake . -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_C_FLAGS="-fvisibility=default -fPIC" -DCMAKE_CXX_FLAGS="-fvisibility=default -fPIC" -DCMAKE_INSTALL_PREFIX=./install > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
       shell: bash
 
     - name: Configure CMake (Ubuntu arm)
       if: matrix.os == 'ubuntu-latest' && matrix.arch == 'arm'
       run: |
-        mkdir -p libiec61850-source/build
-        cd libiec61850-source/build
-        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../cmake/arm-linux-gnueabihf.cmake -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_C_FLAGS="-fvisibility=default -fPIC" -DCMAKE_CXX_FLAGS="-fvisibility=default -fPIC" -DCMAKE_INSTALL_PREFIX=../install > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
+        cd libiec61850-source
+        cmake . -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=./cmake/arm-linux-gnueabihf.cmake -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_C_FLAGS="-fvisibility=default -fPIC" -DCMAKE_CXX_FLAGS="-fvisibility=default -fPIC" -CMAKE_INSTALL_PREFIX=./install > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
       shell: bash
 
     - name: Configure CMake (Ubuntu arm64)
       if: matrix.os == 'ubuntu-latest' && matrix.arch == 'arm64'
       run: |
-        mkdir -p libiec61850-source/build
-        cd libiec61850-source/build
-        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../cmake/aarch64-linux-gnu.cmake -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_C_FLAGS="-fvisibility=default -fPIC" -DCMAKE_CXX_FLAGS="-fvisibility=default -fPIC" -DCMAKE_INSTALL_PREFIX=../install > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
+        cd libiec61850-source
+        cmake . -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=./cmake/aarch64-linux-gnu.cmake -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_C_FLAGS="-fvisibility=default -fPIC" -DCMAKE_CXX_FLAGS="-fvisibility=default -fPIC" -CMAKE_INSTALL_PREFIX=./install > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
       shell: bash
 
     - name: Configure CMake (Windows x64)
@@ -113,44 +111,47 @@ jobs:
       run: |
         mkdir -p libiec61850-source/build
         cd libiec61850-source/build
-        cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SHARED_LIBS=OFF -D_CRT_SECURE_NO_WARNINGS=ON -DCMAKE_INSTALL_PREFIX=../install > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
+        cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SHARED_LIBS=OFF -D_CRT_SECURE_NO_WARNINGS=ON -CMAKE_INSTALL_PREFIX=../install > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
       shell: bash
 
     - name: Configure CMake (macOS x64)
       if: matrix.os == 'macos-latest' && matrix.arch == 'x64'
       run: |
-        mkdir -p libiec61850-source/build
-        cd libiec61850-source/build
-        cmake .. -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=../install > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
+        cd libiec61850-source
+        cmake . -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SHARED_LIBS=OFF -CMAKE_INSTALL_PREFIX=./install > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
       shell: bash
 
     - name: Configure CMake (macOS arm64)
       if: matrix.os == 'macos-latest' && matrix.arch == 'arm64'
       run: |
-        mkdir -p libiec61850-source/build
-        cd libiec61850-source/build
-        cmake .. -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=../install > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
+        cd libiec61850-source
+        cmake . -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SHARED_LIBS=OFF -CMAKE_INSTALL_PREFIX=./install > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
       shell: bash
 
     - name: Debug CMake output
       if: failure()
       run: |
-        if [ -f "libiec61850-source/build/cmake_output.txt" ]; then
-          cat libiec61850-source/build/cmake_output.txt
+        if [ -f "libiec61850-source/cmake_output.txt" ]; then
+          cat libiec61850-source/cmake_output.txt
         else
           echo "CMake output file not found"
+        fi
+      shell: bash
+
+    - name: Check Makefile (Unix)
+      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
+      run: |
+        if [ ! -f "libiec61850-source/Makefile" ]; then
+          echo "Error: Makefile not found in libiec61850-source directory"
+          exit 1
         fi
       shell: bash
 
     - name: Build (Unix)
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
       run: |
-        if [ ! -d "libiec61850-source/build" ]; then
-          echo "Error: Build directory not found"
-          exit 1
-        fi
-        cd libiec61850-source/build
-        cmake --build . --config Release
+        cd libiec61850-source
+        make
       shell: bash
 
     - name: Build (Windows)
@@ -167,8 +168,8 @@ jobs:
     - name: Install library (Unix)
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
       run: |
-        cd libiec61850-source/build
-        cmake --install . --config Release
+        cd libiec61850-source
+        make install
       shell: bash
 
     - name: Install library (Windows)
