@@ -164,7 +164,7 @@ jobs:
           exit 1
         }
         cd libiec61850-source/build
-        cmake --build . --config Release
+        msbuild iec61850.sln /p:Configuration=Release /p:Platform=x64 /t:iec61850
       shell: powershell
 
     - name: Install library (Unix)
