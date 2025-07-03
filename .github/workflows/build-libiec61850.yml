@@ -1,4 +1,4 @@
-name: Build libiec61850 Static Library for Windows
+name: Build libiec61850 Static Library for Windows (with caching)
 
 on:
   push:
@@ -14,40 +14,44 @@ jobs:
         arch: [x64]
 
     steps:
-    - name: Checkout current repository
+    - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Checkout libiec61850 repository
+    - name: Checkout libiec61850
       uses: actions/checkout@v4
       with:
         repository: mz-automation/libiec61850
         ref: v1.6
         path: libiec61850-source
 
-    - name: Debug git checkout
-      run: |
-        ls -la libiec61850-source
-        git -C libiec61850-source log -1
-      shell: bash
+    - name: Cache dependencies (CMake + WinPcap + mbedTLS)
+      id: cache-deps
+      uses: actions/cache@v4
+      with:
+        path: |
+          libiec61850-source/third_party/winpcap
+          libiec61850-source/third_party/mbedtls
+          cmake-cache
+        key: ${{ runner.os }}-windows-x64-deps-${{ hashFiles('libiec61850-source/CMakeLists.txt') }}
 
-    - name: Set up build environment (Windows)
+    - name: Set up build environment (if no cache)
+      if: steps.cache-deps.outputs.cache-hit != 'true'
       run: |
         # Установка CMake через Chocolatey
         choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System'
 
         # Скачивание WinPcap SDK
         curl -L -o WpdPack.zip https://www.winpcap.org/install/bin/WpdPack_4_1_2.zip 
-        unzip WpdPack.zip -d libiec61850-source/third_party/winpcap
+        unzip WpdPack.zip -d libiec61850-source\third_party\winpcap
 
         # Скачивание mbedTLS 2.28
         curl -L -o mbedtls.zip https://github.com/ARMmbed/mbedtls/archive/refs/tags/v2.28.8.zip 
-        unzip mbedtls.zip -d libiec61850-source/third_party/mbedtls
-        mv libiec61850-source/third_party/mbedtls/mbedtls-2.28.8 libiec61850-source/third_party/mbedtls/mbedtls-2.28
+        unzip mbedtls.zip -d libiec61850-source\third_party\mbedtls
+        mv libiec61850-source\third_party\mbedtls\mbedtls-2.28.8 libiec61850-source\third_party\mbedtls\mbedtls-2.28
       shell: bash
 
-    - name: Check third-party dependencies
+    - name: Debug third-party dependencies
       run: |
-        echo "Checking winpcap and mbedtls..."
         dir libiec61850-source\third_party\winpcap
         dir libiec61850-source\third_party\mbedtls
       shell: powershell
@@ -85,56 +89,3 @@ jobs:
           libiec61850-source/install/lib/*
           libiec61850-source/install/include/*
         retention-days: 7
-
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: v1.6-${{ github.sha }}
-        release_name: libiec61850 Windows x64 Release v1.6-${{ github.sha }}
-        body: |
-          Automated release of libiec61850 v1.6 for Windows x64.
-          Includes:
-          - Static library built with TLS support via mbedTLS
-          - Header files
-        draft: false
-        prerelease: false
-
-    - name: Download Windows artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: libiec61850-windows-x64
-        path: artifacts/windows
-
-    - name: Prepare single archive for release
-      run: |
-        mkdir -p libiec61850-release/lib
-        mkdir -p libiec61850-release/include
-
-        cp artifacts/windows/lib/libiec61850.lib libiec61850-release/lib/
-        cp -r artifacts/windows/include/* libiec61850-release/include/
-
-        zip -r libiec61850-v1.6-windows-x64.zip libiec61850-release
-        unzip -l libiec61850-v1.6-windows-x64.zip
-      shell: bash
-
-    - name: Upload Release Asset
-      run: |
-        echo "Uploading libiec61850-v1.6-windows-x64.zip to release..."
-        curl \
-          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-          -H "Content-Type: application/zip" \
-          --data-binary "@libiec61850-v1.6-windows-x64.zip" \
-          "https://uploads.github.com/repos/ ${{ github.repository }}/releases/${{ steps.create_release.outputs.id }}/assets?name=libiec61850-v1.6-windows-x64.zip"
-      shell: bash
