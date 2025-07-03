@@ -14,25 +14,24 @@ jobs:
         arch: [x64]
 
     steps:
-    - name: Checkout repository
+    - name: Checkout current repository
       uses: actions/checkout@v4
 
-    - name: Checkout libiec61850
+    - name: Checkout libiec61850 repository
       uses: actions/checkout@v4
       with:
         repository: mz-automation/libiec61850
         ref: v1.6
         path: libiec61850-source
 
-    - name: Cache dependencies (CMake + WinPcap + mbedTLS)
+    - name: Cache dependencies (WinPcap + mbedTLS)
       id: cache-deps
       uses: actions/cache@v4
       with:
         path: |
           libiec61850-source/third_party/winpcap
-          libiec61850-source/third_party/mbedtls
-          cmake-cache
-        key: ${{ runner.os }}-windows-x64-deps-${{ hashFiles('libiec61850-source/CMakeLists.txt') }}
+          libiec61850-source/third_party/mbedtls/mbedtls-2.28
+        key: ${{ runner.os }}-windows-x64-mbedtls-winpcap-${{ hashFiles('libiec61850-source/CMakeLists.txt') }}
 
     - name: Set up build environment (if no cache)
       if: steps.cache-deps.outputs.cache-hit != 'true'
@@ -42,16 +41,28 @@ jobs:
 
         # Скачивание WinPcap SDK
         curl -L -o WpdPack.zip https://www.winpcap.org/install/bin/WpdPack_4_1_2.zip 
-        unzip WpdPack.zip -d libiec61850-source\third_party\winpcap
+        unzip WpdPack.zip -d libiec61850-source\\third_party\\winpcap
 
         # Скачивание mbedTLS 2.28
         curl -L -o mbedtls.zip https://github.com/ARMmbed/mbedtls/archive/refs/tags/v2.28.8.zip 
-        unzip mbedtls.zip -d libiec61850-source\third_party\mbedtls
-        mv libiec61850-source\third_party\mbedtls\mbedtls-2.28.8 libiec61850-source\third_party\mbedtls\mbedtls-2.28
+        unzip mbedtls.zip -d libiec61850-source\\third_party\\mbedtls
+
+        # Проверка наличия папки перед переименованием
+        SRC_DIR=libiec61850-source/third_party/mbedtls/mbedtls-2.28.8
+        DST_DIR=libiec61850-source/third_party/mbedtls/mbedtls-2.28
+
+        if [ -d "$SRC_DIR" ]; then
+          mv "$SRC_DIR" "$DST_DIR"
+          echo "Successfully renamed mbedtls folder"
+        else
+          echo "ERROR: Source directory $SRC_DIR not found!"
+          exit 1
+        fi
       shell: bash
 
     - name: Debug third-party dependencies
       run: |
+        echo "Checking winpcap and mbedtls..."
         dir libiec61850-source\third_party\winpcap
         dir libiec61850-source\third_party\mbedtls
       shell: powershell
@@ -66,6 +77,8 @@ jobs:
           -DBUILD_DOCUMENTATION=OFF ^
           -DBUILD_SHARED_LIBS=OFF ^
           -DWITH_MBEDTLS=ON ^
+          -DBUILD_HAL=OFF ^
+          -DENABLE_LOGGING=OFF ^
           -DCMAKE_INSTALL_PREFIX=../install
       shell: cmd
 
