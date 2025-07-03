@@ -38,11 +38,15 @@ jobs:
       if: steps.cache-deps.outputs.cache-hit != 'true'
       run: |
         # Установка CMake через Chocolatey
-        choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System'
+        choco install cmake --install WpdPack_4_1_2.zipargs 'ADD_CMAKE_TO_PATH=System'
 
         # Скачивание WinPcap SDK
         curl -L -o WpdPack.zip https://www.winpcap.org/install/bin/WpdPack_4_1_2.zip 
         unzip WpdPack.zip -d libiec61850-source\\third_party\\winpcap
+
+        # Перемещение содержимого WpdPack_4_1_2 в third_party/winpcap
+        mv libiec61850-source/third_party/winpcap/WpdPack_4_1_2/* libiec61850-source/third_party/winpcap/
+        rm -rf libiec61850-source/third_party/winpcap/WpdPack_4_1_2
 
         # Скачивание mbedTLS 2.28
         curl -L -o mbedtls.zip https://github.com/ARMmbed/mbedtls/archive/refs/tags/v2.28.8.zip 
@@ -65,6 +69,8 @@ jobs:
       run: |
         echo "Проверка winpcap и mbedtls..."
         dir libiec61850-source\third_party\winpcap
+        dir libiec61850-source\third_party\winpcap\Include
+        dir libiec61850-source\third_party\winpcap\Lib
         dir libiec61850-source\third_party\mbedtls
       shell: powershell
 
@@ -80,7 +86,8 @@ jobs:
           -DWITH_MBEDTLS=ON ^
           -DBUILD_HAL=ON ^
           -DENABLE_LOGGING=OFF ^
-          -DCMAKE_INSTALL_PREFIX=../install
+          -DCMAKE_INSTALL_PREFIX=../install ^
+          -DWPCAP_DIR=../third_party/winpcap
       shell: cmd
 
     - name: Сборка библиотеки (Windows x64)
