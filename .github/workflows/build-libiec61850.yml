@@ -38,7 +38,7 @@ jobs:
       if: steps.cache-deps.outputs.cache-hit != 'true'
       run: |
         # Установка CMake через Chocolatey
-        choco install cmake --install WpdPack_4_1_2.zipargs 'ADD_CMAKE_TO_PATH=System'
+        choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System'
 
         # Скачивание WinPcap SDK
         curl -L -o WpdPack.zip https://www.winpcap.org/install/bin/WpdPack_4_1_2.zip 
