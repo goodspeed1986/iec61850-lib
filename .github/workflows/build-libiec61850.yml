@@ -1,4 +1,4 @@
-name: Build libiec61850 Static Library for Windows (with caching)
+name: Build libiec61850 Static Library for Windows (without install)
 
 on:
   push:
@@ -78,8 +78,7 @@ jobs:
           -DBUILD_SHARED_LIBS=OFF ^
           -DWITH_MBEDTLS=ON ^
           -DBUILD_HAL=OFF ^
-          -DENABLE_LOGGING=OFF ^
-          -DCMAKE_INSTALL_PREFIX=../install
+          -DENABLE_LOGGING=OFF
       shell: cmd
 
     - name: Build library (Windows x64)
@@ -88,17 +87,23 @@ jobs:
         cmake --build . --config Release --target iec61850
       shell: powershell
 
-    - name: Install library
+    - name: Archive artifacts (from build folder)
       run: |
-        cd libiec61850-source\build
-        cmake --install . --config Release
-      shell: powershell
+        # Создаём временную папку для артефакта
+        mkdir libiec61850-artifact
+        mkdir libiec61850-artifact/lib
+        mkdir libiec61850-artifact/include
 
-    - name: Archive artifacts
+        # Копируем собранную библиотеку
+        cp libiec61850-source/build/src/Release/iec61850.lib libiec61850-artifact/lib/
+
+        # Копируем заголовочные файлы
+        cp -r libiec61850-source/include/* libiec61850-artifact/include/
+      shell: bash
+
+    - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: libiec61850-windows-x64
-        path: |
-          libiec61850-source/install/lib/*
-          libiec61850-source/install/include/*
+        path: libiec61850-artifact/
         retention-days: 7
