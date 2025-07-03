@@ -1,4 +1,4 @@
-name: Build libiec61850 Static Library
+name: Build libiec61850 Static Library for Windows
 
 on:
   push:
@@ -8,20 +8,10 @@ on:
 
 jobs:
   build:
+    runs-on: windows-latest
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
         arch: [x64]
-        include:
-          - os: ubuntu-latest
-            arch: arm
-          - os: ubuntu-latest
-            arch: arm64
-          - os: macos-latest
-            arch: arm64
-      fail-fast: false
-
-    runs-on: ${{ matrix.os }}
 
     steps:
     - name: Checkout current repository
@@ -40,157 +30,57 @@ jobs:
         git -C libiec61850-source log -1
       shell: bash
 
-    - name: Copy toolchain files
-      if: matrix.os == 'ubuntu-latest' && (matrix.arch == 'arm' || matrix.arch == 'arm64')
-      run: |
-        mkdir -p libiec61850-source/cmake
-        cp cmake/arm-linux-gnueabihf.cmake libiec61850-source/cmake/
-        cp cmake/aarch64-linux-gnu.cmake libiec61850-source/cmake/
-      shell: bash
-
-    - name: Set up build environment (Ubuntu)
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y cmake build-essential doxygen
-        if [ "${{ matrix.arch }}" = "arm" ]; then
-          sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf libc6-dev-armel-cross libc6-dev-armhf-cross
-        fi
-        if [ "${{ matrix.arch }}" = "arm64" ]; then
-          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-        fi
-      shell: bash
-
     - name: Set up build environment (Windows)
-      if: matrix.os == 'windows-latest'
       run: |
+        # Установка CMake через Chocolatey
         choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System'
-        curl -L -o wpcap.zip https://www.winpcap.org/install/bin/WpdPack_4_1_2.zip
-        unzip wpcap.zip -d libiec61850-source/third_party/winpcap
-        curl -L -o mbedtls.zip https://github.com/ARMmbed/mbedtls/archive/refs/tags/v2.28.8.zip
+
+        # Скачивание WinPcap SDK
+        curl -L -o WpdPack.zip https://www.winpcap.org/install/bin/WpdPack_4_1_2.zip 
+        unzip WpdPack.zip -d libiec61850-source/third_party/winpcap
+
+        # Скачивание mbedTLS 2.28
+        curl -L -o mbedtls.zip https://github.com/ARMmbed/mbedtls/archive/refs/tags/v2.28.8.zip 
         unzip mbedtls.zip -d libiec61850-source/third_party/mbedtls
         mv libiec61850-source/third_party/mbedtls/mbedtls-2.28.8 libiec61850-source/third_party/mbedtls/mbedtls-2.28
       shell: bash
 
-    - name: Set up build environment (macOS)
-      if: matrix.os == 'macos-latest'
+    - name: Check third-party dependencies
       run: |
-        brew install cmake make doxygen
-        brew upgrade cmake
-      shell: bash
-
-    - name: Check source directory
-      run: |
-        if [ ! -d "libiec61850-source" ]; then
-          echo "Error: libiec61850-source directory not found"
-          exit 1
-        fi
-      shell: bash
-
-    - name: Configure CMake (Ubuntu x64)
-      if: matrix.os == 'ubuntu-latest' && matrix.arch == 'x64'
-      run: |
-        cd libiec61850-source
-        cmake . -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_C_FLAGS="-fvisibility=default -fPIC" -DCMAKE_CXX_FLAGS="-fvisibility=default -fPIC" -DCMAKE_INSTALL_PREFIX=./install > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
-      shell: bash
-
-    - name: Configure CMake (Ubuntu arm)
-      if: matrix.os == 'ubuntu-latest' && matrix.arch == 'arm'
-      run: |
-        cd libiec61850-source
-        cmake . -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=./cmake/arm-linux-gnueabihf.cmake -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -CMAKE_C_FLAGS="-fvisibility=default -fPIC" -CMAKE_CXX_FLAGS="-fvisibility=default -fPIC" -DCMAKE_INSTALL_PREFIX=./install > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
-      shell: bash
-
-    - name: Configure CMake (Ubuntu arm64)
-      if: matrix.os == 'ubuntu-latest' && matrix.arch == 'arm64'
-      run: |
-        cd libiec61850-source
-        cmake . -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=./cmake/aarch64-linux-gnu.cmake -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_C_FLAGS="-fvisibility=default -fPIC" -CMAKE_CXX_FLAGS="-fvisibility=default -fPIC" -CMAKE_INSTALL_PREFIX=./install > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
-      shell: bash
+        echo "Checking winpcap and mbedtls..."
+        dir libiec61850-source\third_party\winpcap
+        dir libiec61850-source\third_party\mbedtls
+      shell: powershell
 
     - name: Configure CMake (Windows x64)
-      if: matrix.os == 'windows-latest' && matrix.arch == 'x64'
       run: |
-        mkdir -p libiec61850-source/build
-        cd libiec61850-source/build
-        cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SHARED_LIBS=OFF -DWITH_MBEDTLS=ON -D_CRT_SECURE_NO_WARNINGS=ON -DCMAKE_INSTALL_PREFIX=../install > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
-      shell: bash
+        mkdir libiec61850-source\build
+        cd libiec61850-source\build
+        cmake .. -G "Visual Studio 17 2022" -A x64 ^
+          -DCMAKE_BUILD_TYPE=Release ^
+          -DBUILD_EXAMPLES=OFF ^
+          -DBUILD_DOCUMENTATION=OFF ^
+          -DBUILD_SHARED_LIBS=OFF ^
+          -DWITH_MBEDTLS=ON ^
+          -DCMAKE_INSTALL_PREFIX=../install
+      shell: cmd
 
-    - name: Configure CMake (macOS x64)
-      if: matrix.os == 'macos-latest' && matrix.arch == 'x64'
+    - name: Build library (Windows x64)
       run: |
-        cd libiec61850-source
-        cmake . -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=./install > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
-      shell: bash
-
-    - name: Configure CMake (macOS arm64)
-      if: matrix.os == 'macos-latest' && matrix.arch == 'arm64'
-      run: |
-        cd libiec61850-source
-        cmake . -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=./install > cmake_output.txt 2>&1 || (cat cmake_output.txt && exit 1)
-      shell: bash
-
-    - name: Debug CMake output
-      if: failure()
-      run: |
-        if [ -f "libiec61850-source/cmake_output.txt" ]; then
-          cat libiec61850-source/cmake_output.txt
-        else
-          echo "CMake output file not found"
-        fi
-      shell: bash
-
-    - name: Check Makefile (Unix)
-      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
-      run: |
-        if [ ! -f "libiec61850-source/Makefile" ]; then
-          echo "Error: Makefile not found in libiec61850-source directory"
-          exit 1
-        fi
-      shell: bash
-
-    - name: Build (Unix)
-      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
-      run: |
-        cd libiec61850-source
-        make
-      shell: bash
-
-    - name: Build (Windows)
-      if: matrix.os == 'windows-latest'
-      run: |
-        if (!(Test-Path "libiec61850-source/build")) {
-          Write-Error "Build directory not found"
-          exit 1
-        }
-        cd libiec61850-source/build
-        msbuild iec61850.sln /p:Configuration=Release /p:Platform=x64 /t:iec61850
+        cd libiec61850-source\build
+        cmake --build . --config Release --target iec61850
       shell: powershell
 
-    - name: Install library (Unix)
-      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
+    - name: Install library
       run: |
-        cd libiec61850-source
-        make install
-      shell: bash
-
-    - name: Install library (Windows)
-      if: matrix.os == 'windows-latest'
-      run: |
-        cd libiec61850-source/build
+        cd libiec61850-source\build
         cmake --install . --config Release
       shell: powershell
-
-    - name: Debug install output
-      run: |
-        echo "Listing contents of install directory:"
-        find libiec61850-source/install -type f || dir libiec61850-source/install /s
-      shell: bash
 
     - name: Archive artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: libiec61850-${{ matrix.os }}-${{ matrix.arch }}
+        name: libiec61850-windows-x64
         path: |
           libiec61850-source/install/lib/*
           libiec61850-source/install/include/*
@@ -212,44 +102,39 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: v1.6-${{ github.sha }}
-        release_name: libiec61850 Release v1.6-${{ github.sha }}
+        release_name: libiec61850 Windows x64 Release v1.6-${{ github.sha }}
         body: |
-          Automated release of libiec61850 v1.6 for multiple platforms.
-          Includes static libraries for all platforms and a single set of header files:
-          - Ubuntu (x64, arm, arm64)
-          - Windows (x64, with TLS support via mbedTLS)
-          - macOS (x64, arm64)
+          Automated release of libiec61850 v1.6 for Windows x64.
+          Includes:
+          - Static library built with TLS support via mbedTLS
+          - Header files
         draft: false
         prerelease: false
 
-    - name: Download all artifacts
+    - name: Download Windows artifact
       uses: actions/download-artifact@v4
       with:
-        path: artifacts
+        name: libiec61850-windows-x64
+        path: artifacts/windows
 
     - name: Prepare single archive for release
       run: |
         mkdir -p libiec61850-release/lib
         mkdir -p libiec61850-release/include
-        for artifact in artifacts/libiec61850-*; do
-          platform_arch=$(basename "$artifact" | sed 's/libiec61850-//')
-          lib_file=$(find "$artifact/lib" -type f -name "*.a" -o -name "*.lib" | head -n 1)
-          if [ -n "$lib_file" ]; then
-            lib_ext="${lib_file##*.}"
-            cp "$lib_file" "libiec61850-release/lib/libiec61850-${platform_arch}.${lib_ext}"
-          fi
-        done
-        cp -r artifacts/libiec61850-ubuntu-latest-x64/include/* libiec61850-release/include/
-        zip -r libiec61850-v1.6.zip libiec61850-release
-        unzip -l libiec61850-v1.6.zip
+
+        cp artifacts/windows/lib/libiec61850.lib libiec61850-release/lib/
+        cp -r artifacts/windows/include/* libiec61850-release/include/
+
+        zip -r libiec61850-v1.6-windows-x64.zip libiec61850-release
+        unzip -l libiec61850-v1.6-windows-x64.zip
       shell: bash
 
     - name: Upload Release Asset
       run: |
-        echo "Uploading libiec61850-v1.6.zip to release..."
+        echo "Uploading libiec61850-v1.6-windows-x64.zip to release..."
         curl \
           -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
           -H "Content-Type: application/zip" \
-          --data-binary "@libiec61850-v1.6.zip" \
-          "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.create_release.outputs.id }}/assets?name=libiec61850-v1.6.zip"
+          --data-binary "@libiec61850-v1.6-windows-x64.zip" \
+          "https://uploads.github.com/repos/ ${{ github.repository }}/releases/${{ steps.create_release.outputs.id }}/assets?name=libiec61850-v1.6-windows-x64.zip"
       shell: bash
